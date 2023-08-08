@@ -1,6 +1,13 @@
-# dtts
+## dtts: Time-series functionality based on `nanotime` and `data.table`.
 
-`dtts` provides time-series functionality based on `nanotime` and `data.table`.
+[![CI](https://github.com/eddelbuettel/dtts/workflows/ci/badge.svg)](https://github.com/eddelbuettel/dtts/actions?query=workflow%3Aci)
+[![License](https://eddelbuettel.github.io/badges/GPL2+.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
+[![CRAN](https://www.r-pkg.org/badges/version/dtts)](https://cran.r-project.org/package=dtts)
+[![r-universe](https://eddelbuettel.r-universe.dev/badges/dtts)](https://eddelbuettel.r-universe.dev/dtts)
+[![Dependencies](https://tinyverse.netlify.com/badge/dtts)](https://cran.r-project.org/package=dtts)
+[![Downloads](https://cranlogs.r-pkg.org/badges/dtts?color=brightgreen)](https://www.r-pkg.org/pkg/dtts)
+[![Code Coverage](https://codecov.io/gh/eddelbuettel/dtts/graph/badge.svg)](https://app.codecov.io/gh/eddelbuettel/dtts)
+[![Last Commit](https://img.shields.io/github/last-commit/eddelbuettel/dtts)](https://github.com/eddelbuettel/dtts)
 
 ## Motivation
 
@@ -95,7 +102,7 @@ This figure shows an alignment using a statistic
 <img src="./inst/images/align_count.svg">
 
 
-#### `align.idx`
+#### `align_idx`
 
 This function takes two vectors of type `nanotime`. It aligns the
 first one onto the second one and returns the indices of the first
@@ -114,7 +121,7 @@ library(dtts)
 t1 <- seq(as.nanotime("1970-01-01T00:00:00+00:00"), by=as.nanoduration("00:00:01"), length.out=100)
 t2 <- seq(as.nanotime("1970-01-01T00:00:10+00:00"), by=as.nanoduration("00:00:10"), length.out=10)
 
-align.idx(t1, t2, start=as.nanoduration("-00:00:10"))
+align_idx(t1, t2, start=as.nanoduration("-00:00:10"))
 ~~~
 
 Which produces:
@@ -126,7 +133,7 @@ Which produces:
 #### `align`
 
 This function takes a `data.table` and aligns it onto `y`, a vector of
-`nanotime`. Like `align.idx`, it uses the arguments `start`, `end`,
+`nanotime`. Like `align_idx`, it uses the arguments `start`, `end`,
 `sopen` and `eopen` to define the intervals around the points in `y`. 
 
 Instead of the result being an index, it is a new `data.table`
@@ -173,7 +180,7 @@ Which produces:
 10: 1970-01-01T00:01:40+00:00 94.5
 ~~~
 
-#### `grid.align`
+#### `grid_align`
 
 This function adds one more dimension to the function `align`. Instead
 of taking a vector `y`, it constructs a grid that has as interval the
@@ -188,7 +195,7 @@ be anchored to a specific timezone.
 
 The following example is the same as for the `align` function, but
 shows that the vector `t2` does not need to be supplied as it is
-instead constructed by `grid.align`:
+instead constructed by `grid_align`:
 
 ~~~ R
 library(dtts)
@@ -197,7 +204,7 @@ t1 <- seq(as.nanotime("1970-01-01T00:00:00+00:00"), by=as.nanoduration("00:00:01
 dt1 <- data.table(index=t1, V1=0:99)
 setkey(dt1, index)
 
-grid.align(dt1, as.nanoduration("00:00:10"), func=colMeans)
+grid_align(dt1, as.nanoduration("00:00:10"), func=colMeans)
 ~~~
 
 Which produces:
@@ -218,7 +225,7 @@ Which produces:
 
 #### Frequency
 
-Using `grid.align` and `nrow` it is possible to get the frequency of a
+Using `grid_align` and `nrow` it is possible to get the frequency of a
 time-series, i.e. to count the number of elements in each interval of
 a grid.
 
@@ -232,7 +239,7 @@ t1 <- seq(as.nanotime("1970-01-01T00:00:00+00:00"), by=as.nanoduration("00:00:01
 dt1 <- data.table(index=t1, V1=0:99)
 setkey(dt1, index)
 
-grid.align(dt1, as.nanoduration("00:00:10"), func=nrow)
+grid_align(dt1, as.nanoduration("00:00:10"), func=nrow)
 ~~~
 
 Which produces:
@@ -251,6 +258,53 @@ Which produces:
 10: 1970-01-01T00:01:40+00:00 10
 ~~~
 
+#### ops
+
+`ops` performs arithmetic operations between two time-series and has
+the following signature, where `x` and `y` are time-series and `op` is
+a string denoting an arithmetic operator.
+
+~~~ R
+ops(x, y, op_string)
+~~~
+
+Each entry in the left time-series operand defines an interval from
+the previous entry, and the value associated with this interval will
+be applied to all the observations in the right time-series operand
+that fall in the interval. Note that the interval is closed at the
+beginning and open and the end. The available values for op are "*",
+"/", "+", "-".
+
+This function is particulary useful to apply a multiplier or to add a
+constant that changes over time; one example would be the adjustment
+of stock prices for splits.
+
+Here is a visualization of `ops`:
+
+<img src="./inst/images/ops.svg">
+
+
+Here is an example:
+
+~~~ R
+one_second_duration  <- as.nanoduration("00:00:01")
+t1 <- nanotime(1:2 * one_second_duration * 3)
+t2 <- nanotime(1:4 * one_second_duration)
+dt1 <- data.table(index=t1, data1 = 1:length(t1))
+setkey(dt1, index)
+dt2 <- data.table(index=t2, data1 = 1:length(t2))
+setkey(dt2, index)
+ops(dt1, dt2, "+")
+~~~
+
+Which produces:
+```
+                       index data1
+1: 1970-01-01T00:00:01+00:00     2
+2: 1970-01-01T00:00:02+00:00     3
+3: 1970-01-01T00:00:03+00:00     3
+4: 1970-01-01T00:00:04+00:00     4
+```
 
 ### Time-series subsetting
 
@@ -260,8 +314,8 @@ Using `nanoival`, it is possible to do complex subsetting of a time-series:
 one_second <- 1e9
 index <- seq(nanotime("2022-12-12 12:12:10+00:00"), length.out=10, by=one_second)
 dts <- data.table(index=index, data=1:length(index), key="index")
-ival <- c(as.nanoival("-2022-12-12 12:12:10+00:00 -> 2022-12-12 12:12:14+00:00-"),
-          as.nanoival("+2022-12-12 12:12:18+00:00 -> 2022-12-12 12:12:20+00:00+"))
+ival <- as.nanoival(c("-2022-12-12 12:12:10+00:00 -> 2022-12-12 12:12:14+00:00-"),
+                     ("+2022-12-12 12:12:18+00:00 -> 2022-12-12 12:12:20+00:00+"))
 dts[index %in% ival]
 
 ~~~
@@ -279,8 +333,17 @@ at least discussed items.
 
 ## Installation
 
+The package is on [CRAN](https://cran.r-project.org) and can be installed via a standard
+
+
 ```r
-remotes::install_github("eddelbuettel/dtts.utils")
+install.packages("dtts")
+```
+
+and development versions can be installed via
+
+```r
+remotes::install_github("eddelbuettel/dtts")
 ```
 
 ## Author

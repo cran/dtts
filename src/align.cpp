@@ -3,6 +3,8 @@
 #include <chrono>
 #include <iterator>
 #include <cstdint>
+#include <functional>
+#include <vector>
 #include <Rcpp.h>
 #include <R_ext/Rdynload.h>
 #include "nanotime/globals.hpp"
@@ -70,9 +72,9 @@ static Rcpp::NumericVector align_idx_helper_duration(const nanotime::dtime* x,
     // advance until we have a point in x that is in the interval
     // defined around yi:
     if (sopen[iy]) {
-      while (ix <= xlen && x[ix] <= ystart) ++ix;
+      while (ix < xlen && x[ix] <= ystart) ++ix;
     } else {
-      while (ix <= xlen && x[ix] < ystart) ++ix;
+      while (ix < xlen && x[ix] < ystart) ++ix;
     }
     if (eopen[iy]) {
       if (ix >= xlen || x[ix] >= yend) {
@@ -124,9 +126,9 @@ static Rcpp::NumericVector align_idx_helper_period(const nanotime::dtime* x,
     // advance until we have a point in x that is in the interval
     // defined around yi:
     if (sopen[iy]) {
-      while (ix <= xlen && x[ix] <= ystart) ++ix;
+      while (ix < xlen && x[ix] <= ystart) ++ix;
     } else {
-      while (ix <= xlen && x[ix] < ystart) ++ix;
+      while (ix < xlen && x[ix] < ystart) ++ix;
     }
     if (eopen[iy]) {
       if (ix >= xlen || x[ix] >= yend) {
@@ -346,23 +348,16 @@ Rcpp::List align_duration(const Rcpp::NumericVector& x,         // nanotime vect
                           const Rcpp::LogicalVector& eopen,     // end open
                           const Rcpp::Function func)            // function to apply (character)
 {
-  try {
-    return align_func_duration(reinterpret_cast<const nanotime::dtime*>(&x[0]),
-                               x.size(),
-                               reinterpret_cast<const nanotime::dtime*>(&y[0]),
-                               y.size(),
-                               xdata,
-                               ConstPseudoVectorDuration(start),
-                               ConstPseudoVectorDuration(end),
-                               ConstPseudoVectorLgl(sopen),
-                               ConstPseudoVectorLgl(eopen),
-                               Rcpp::Function(func));
-  } catch(std::exception &ex) {	
-    forward_exception_to_r(ex);
-  } catch(...) { 
-    ::Rf_error("c++ exception (unknown reason)"); 
-  }
-  return R_NilValue;         // not reached
+  return align_func_duration(reinterpret_cast<const nanotime::dtime*>(&x[0]),
+                             x.size(),
+                             reinterpret_cast<const nanotime::dtime*>(&y[0]),
+                             y.size(),
+                             xdata,
+                             ConstPseudoVectorDuration(start),
+                             ConstPseudoVectorDuration(end),
+                             ConstPseudoVectorLgl(sopen),
+                             ConstPseudoVectorLgl(eopen),
+                             Rcpp::Function(func));
 }
 
 
@@ -377,24 +372,17 @@ Rcpp::List align_period(const Rcpp::NumericVector& x,         // nanotime vector
                         const Rcpp::Function func,            // function to apply (character)
                         const Rcpp::CharacterVector tz)       // timezone
 {
-  try {
-    return align_func_period(reinterpret_cast<const nanotime::dtime*>(&x[0]),
-                             x.size(),
-                             reinterpret_cast<const nanotime::dtime*>(&y[0]),
-                             y.size(),
-                             xdata,
-                             ConstPseudoVectorPrd(start),
-                             ConstPseudoVectorPrd(end),
-                             ConstPseudoVectorLgl(sopen),
-                             ConstPseudoVectorLgl(eopen),
-                             Rcpp::Function(func),
-                             ConstPseudoVectorChar(tz));
-  } catch(std::exception &ex) {	
-    forward_exception_to_r(ex);
-  } catch(...) { 
-    ::Rf_error("c++ exception (unknown reason)");
-  }
-  return R_NilValue;         // not reached
+  return align_func_period(reinterpret_cast<const nanotime::dtime*>(&x[0]),
+                           x.size(),
+                           reinterpret_cast<const nanotime::dtime*>(&y[0]),
+                           y.size(),
+                           xdata,
+                           ConstPseudoVectorPrd(start),
+                           ConstPseudoVectorPrd(end),
+                           ConstPseudoVectorLgl(sopen),
+                           ConstPseudoVectorLgl(eopen),
+                           Rcpp::Function(func),
+                           ConstPseudoVectorChar(tz));
 }
 
 
@@ -406,21 +394,14 @@ Rcpp::NumericVector align_idx_duration(const Rcpp::NumericVector& x,     // nano
                                        const Rcpp::LogicalVector& sopen, // start open
                                        const Rcpp::LogicalVector& eopen) // end open
 {
-  try {
-    return align_idx_helper_duration(reinterpret_cast<const nanotime::dtime*>(&x[0]),
-                                     x.size(),
-                                     reinterpret_cast<const nanotime::dtime*>(&y[0]),
-                                     y.size(),
-                                     ConstPseudoVectorDuration(start),
-                                     ConstPseudoVectorDuration(end),
-                                     ConstPseudoVectorLgl(sopen),
-                                     ConstPseudoVectorLgl(eopen));
-  } catch(std::exception &ex) {	
-    forward_exception_to_r(ex);
-  } catch(...) { 
-    ::Rf_error("c++ exception (unknown reason)"); 
-  }
-  return R_NilValue;             // not reached
+  return align_idx_helper_duration(reinterpret_cast<const nanotime::dtime*>(&x[0]),
+                                   x.size(),
+                                   reinterpret_cast<const nanotime::dtime*>(&y[0]),
+                                   y.size(),
+                                   ConstPseudoVectorDuration(start),
+                                   ConstPseudoVectorDuration(end),
+                                   ConstPseudoVectorLgl(sopen),
+                                   ConstPseudoVectorLgl(eopen));
 }
 
 
@@ -433,47 +414,155 @@ Rcpp::NumericVector align_idx_period(const Rcpp::NumericVector& x,     // nanoti
                                      const Rcpp::LogicalVector& eopen, // end open
                                      const Rcpp::CharacterVector& tz)  // timezone
 {
-  try {
-    return align_idx_helper_period(reinterpret_cast<const nanotime::dtime*>(&x[0]),
-                                   x.size(),
-                                   reinterpret_cast<const nanotime::dtime*>(&y[0]),
-                                   y.size(),
-                                   ConstPseudoVectorPrd(start),
-                                   ConstPseudoVectorPrd(end),
-                                   ConstPseudoVectorLgl(sopen),
-                                   ConstPseudoVectorLgl(eopen),
-                                   ConstPseudoVectorChar(tz));
-  } catch(std::exception &ex) {	
-    forward_exception_to_r(ex);
-  } catch(...) { 
-    ::Rf_error("c++ exception (unknown reason)"); 
-  }
-  return R_NilValue;             // not reached
+  return align_idx_helper_period(reinterpret_cast<const nanotime::dtime*>(&x[0]),
+                                 x.size(),
+                                 reinterpret_cast<const nanotime::dtime*>(&y[0]),
+                                 y.size(),
+                                 ConstPseudoVectorPrd(start),
+                                 ConstPseudoVectorPrd(end),
+                                 ConstPseudoVectorLgl(sopen),
+                                 ConstPseudoVectorLgl(eopen),
+                                 ConstPseudoVectorChar(tz));
 }
 
 
-// // template <typename T, typename F>
-// // void op_zts(const arr::Vector<nanotime::dtime>& x, 
-// //             const arr::Vector<nanotime::dtime>& y, 
-// //             const arr::Vector<T>& xdata, 
-// //             arr::Vector<T>& ydata) 
-// // {
-// //   size_t ix = 0;
 
-// //   if (xdata.size() != x.size()) throw std::out_of_range("'xdata' must have same size as 'x'");   
+// this function takes two vectors and positional args and an op:
+template<typename U, int RTYPE, typename F>
+void applyv(U x, Rcpp::Vector<RTYPE>& y, size_t y_s, size_t y_e, F f) {
+  for (auto iy=y_s; iy<y_e; ++iy) {
+    y[iy] = f(x, y[iy]);
+  }
+}
 
-// //   // for each point in x, we try to find a matching point or set of
-// //   // points in y:
-// //   auto from_yiter = y.begin();
-// //   for (ix=0; ix<x.size(); ix++) {
-// //     auto to_yiter = std::lower_bound(from_yiter, y.end(), x[ix]);
-// //     if (to_yiter == y.end()) continue;
 
-// //     auto iy_s = from_yiter-y.begin();
-// //     auto iy_e = to_yiter-y.begin();
-// //     F::f(xdata[ix], ydata.begin() + iy_s, ydata.begin() + iy_e);
-      
-// //     from_yiter = to_yiter;
-// //   }
-// // }
+void ops_helper(const nanotime::dtime* x,
+                size_t xlen,
+                const nanotime::dtime* y,
+                size_t ylen,
+                const Rcpp::NumericVector& xdata,
+                Rcpp::NumericVector& ydata,
+                std::function<double(double, double)> op)
+{
+  size_t ix = 0;
+ 
+  // for each point in x, we try to find a matching point or set of
+  // points in y:
 
+  auto from_yiter = y;
+  for (ix=0; ix < xlen; ix++) {
+    auto to_yiter = std::lower_bound(from_yiter, y + ylen, x[ix]);
+    if (to_yiter == y + ylen) continue;
+
+    auto iy_s = from_yiter - y;
+    auto iy_e = to_yiter - y;    
+    applyv(xdata[ix], ydata, iy_s,  iy_e, op);
+        
+    from_yiter = to_yiter;
+  }
+}
+
+
+
+static bool check_numeric(SEXP s) {
+  return TYPEOF(s) == REALSXP || TYPEOF(s) == INTSXP;
+}
+
+
+static R_xlen_t get_nb_numeric_columns(Rcpp::List& l) {
+  auto ncols_double = 0;
+  for (auto i=1; i<l.size(); ++i) {
+    if (check_numeric(l[i])) {
+      ++ncols_double;
+    }
+  }
+  return ncols_double;
+}
+
+
+// [[Rcpp::export(.ops)]]
+Rcpp::List ops(Rcpp::List& xdata,
+               Rcpp::List& ydata,
+               Rcpp::String& op_string)
+{
+  // handle the translation of the op_string
+  std::function<double(double, double)> op;
+  if (op_string == "+") {
+    op = std::plus<double>();
+  } else if (op_string == "-") {
+    op = std::minus<double>();
+  } else if (op_string == "*") {
+    op = std::multiplies<double>();
+  } else if (op_string == "/") {
+    op = std::divides<double>();
+  } else {
+    Rcpp::stop(std::string("unsupported operator '") + std::string(op_string) + "'");
+  }
+  
+  // only work with doubles; require that except for the index, all
+  // other columns of 'x' are numerics:
+  auto x_ncols_numeric = get_nb_numeric_columns(xdata);
+  if (x_ncols_numeric == 0) {
+    Rcpp::stop("'x' must have at least one numeric column");
+  } else if (x_ncols_numeric != xdata.size() - 1) {
+    Rcpp::stop("all data columns of 'x' must be numeric");
+  }
+  // if one column, easy, apply it on all columns of 'ydata', but if
+  // more than one, check we have the same number of numeric columns in
+  // 'ydata':
+  auto y_ncols_numeric = get_nb_numeric_columns(ydata);
+  if (x_ncols_numeric != 1 && x_ncols_numeric != y_ncols_numeric) {
+    Rcpp::stop("'x' must have one numeric column or the same number as 'y'");
+  }
+  
+
+  Rcpp::NumericVector x = xdata[0];
+  auto x_dt = reinterpret_cast<const nanotime::dtime*>(&x[0]);
+  Rcpp::NumericVector y = ydata[0];
+  auto y_dt = reinterpret_cast<const nanotime::dtime*>(&y[0]);
+ 
+  Rcpp::List res = Rcpp::clone(ydata);
+
+  // iterate through the rest of y columns and apply the ops:
+  auto ix = 0;
+  for (auto iy=1; iy<ydata.size(); ) {
+    Rcpp::NumericVector xdata_col;
+    if (xdata.size() == 2) {
+      xdata_col = xdata[1];
+    } else {
+      ++ix;
+      if (ix >= xdata.size()) {
+        break;
+      }
+      xdata_col = xdata[ix];
+    }
+
+    // move to next numeric column of 'ydata':
+    while (!check_numeric(ydata[iy]) && (iy < ydata.size())) {
+     ++iy;
+    }
+    // if we got to the last columns it means we are done (not
+    // reachable as we run out of x cols first, but in case that logic
+    // changes, keep this check):
+    if (iy == ydata.size()) {
+      break;  // # nocov
+    }
+
+    Rcpp::NumericVector ydata_col = res[iy]; 
+    ops_helper(x_dt,
+               x.size(),
+               y_dt,
+               y.size(),
+               xdata_col,
+               ydata_col,
+               op);
+    // after cloning, strangely, it seems we get copies and not references to the
+    // elements of the list; so we reassign 'ydata_col' back to res so res is
+    // modified:
+    res[iy] = ydata_col;
+
+    ++iy;                       // increment for the next time round
+  }
+  
+  return res;
+}
