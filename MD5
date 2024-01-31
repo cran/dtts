@@ -1,11 +1,11 @@
-64c676fe205508be6315f8c78d0ea0b0 *ChangeLog
-99dc78f479b15dca7923b0ced78712d4 *DESCRIPTION
+e6d5935785a1b45ec502ae96f74e9347 *ChangeLog
+87b61a91fa8bcff64b114f605ea71193 *DESCRIPTION
 3f3d45316133893eb504e5120fc70aec *NAMESPACE
 10c23517e96b0283561a8a9f7b7e0140 *R/RcppExports.R
 e56b5acad9a2221a99dc5bedd329a853 *R/dtts.R
 e5f264fcb2fbe4d36d10f8ca56af7097 *README.md
 5e2d19193e19de97094be5c8e1475da1 *cleanup
-b8b67f1a7d7c247c6a3ec49b5d3c3897 *inst/NEWS.Rd
+3f8d6663aa54750c50fa08cb9d12132e *inst/NEWS.Rd
 1f098d6916339323d858032d11417dfc *inst/images/align_closest.svg
 de6d470c07db07e0e79a7c8acc34f73a *inst/images/align_count.svg
 d3790ac4ab032cfd35dec5970cf5b8bc *inst/images/ops.svg
@@ -16,5 +16,5 @@ b957690cbe3284db0f9179d5a0afdcdb *man/frequency-data.table-method.Rd
 67dce8f708e8e1173729d068e7a5d5db *man/grid_align.Rd
 fa3652d1f50a4e9ea7edf3c545a2477c *man/ops.Rd
 554256fe5644b277b9940926c7015f03 *src/RcppExports.cpp
-12f0f774432b7d627109d5e0410406f4 *src/align.cpp
+ebb413f5eab08aca69ed2381ac02f66e *src/align.cpp
 cb95d897b5a979172d8b9987ec695d17 *tests/tinytest.R
